@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import MapControls from '../../components/map/MapControls';
 import MapArea from '../../components/map/MapArea';
-import Header from '../../components/Header';
+import { UserHeader } from '../../components/UserHeader';
+import { authService } from '../../services/authServices';
 
 // Define libraries array outside component to prevent re-renders
 const libraries: ("places")[] = ['places'];
 
 const Maps: React.FC = () => {
+  const navigate = useNavigate();
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_API_KEY_HERE",
     libraries: libraries,
@@ -16,8 +20,19 @@ const Maps: React.FC = () => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
   
-  // State for Header menu
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // Get user data for header
+  const currentUser = authService.getCurrentUser();
+  const username = currentUser?.fullName || currentUser?.name || 'User';
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    message.success('Logged out successfully');
+    navigate('/user/login');
+  };
 
   if (!isLoaded) {
     return (
@@ -30,11 +45,14 @@ const Maps: React.FC = () => {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50">
       {/* Header Component */}
-      <Header isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      <UserHeader 
+        navigate={handleNavigate}
+        handleLogout={handleLogout}
+        username={username}
+      />
 
       {/* Main Content Area */}
-      {/* Changed: Added padding (pt-24, pb-4, px-4) and gap-4 instead of margins on children */}
-      <div className="flex flex-1 w-full pt-24 pb-4 px-4 gap-4">
+      <div className="flex flex-1 w-full pt-20 pb-2 px-2 gap-2">
         
         <MapControls 
           onDirectionsCalculated={(result) => setDirectionsResponse(result)}
